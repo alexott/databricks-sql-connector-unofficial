@@ -54,6 +54,8 @@ THRIFT_ERROR_MESSAGE_HEADER = "x-thriftserver-error-message"
 DATABRICKS_ERROR_OR_REDIRECT_HEADER = "x-databricks-error-or-redirect-message"
 DATABRICKS_REASON_HEADER = "x-databricks-reason-phrase"
 
+TIMESTAMP_AS_STRING_CONFIG = "spark.thriftserver.arrowBasedRowSet.timestampAsString"
+
 
 def _parse_timestamp(value):
     if value:
@@ -133,6 +135,7 @@ class Connection(object):
             server_hostname,
             http_path,
             access_token,
+            session_configuration=None,
             **kwargs
     ):
         """Connect to a Databricks SQL endpoint or a Databricks cluster.
@@ -141,6 +144,8 @@ class Connection(object):
         :param http_path: Http path either to a DBSQL endpoint (e.g. /sql/1.0/endpoints/1234567890abcdef)
                or to a DBR interactive cluster (e.g. /sql/protocolv1/o/1234567890123456/1234-123456-slid123)
         :param access_token: Http Bearer access token, e.g. Databricks Personal Access Token.
+        :param session_configuration: An optional dictionary of Spark session parameters. Defaults to None.
+               Execute the SQL command `SET -v` to get a full list of available commands.
         """
 
         # Internal arguments in **kwargs:
@@ -261,10 +266,14 @@ class Connection(object):
         # "V6 uses binary type for binary payload (was string) and uses columnar result set"
         protocol_version = ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V6
 
+        session_configuration = {k: str(v) for (k, v) in (session_configuration or {}).items()}
+        self._check_session_configuration(session_configuration)
+
         try:
             self._transport.open()
             open_session_req = ttypes.TOpenSessionReq(
-                client_protocol=protocol_version
+                client_protocol=protocol_version,
+                configuration=session_configuration
             )
             response = self._make_request(self._client.OpenSession, open_session_req)
             _check_status(response)
@@ -283,6 +292,14 @@ class Connection(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Call close"""
         self.close()
+
+    def _check_session_configuration(self, session_configuration):
+        # This client expects timetampsAsString to be false, so we do not allow users to modify that
+        if session_configuration.get(TIMESTAMP_AS_STRING_CONFIG, "false").lower() != "false":
+            raise Error("Invalid session configuration: {} cannot be changed "
+                        "while using the Databricks SQL connector, it must be false not {}".format(
+                TIMESTAMP_AS_STRING_CONFIG, session_configuration[TIMESTAMP_AS_STRING_CONFIG]
+            ))
 
     def close(self):
         """Close the underlying session and Thrift transport"""

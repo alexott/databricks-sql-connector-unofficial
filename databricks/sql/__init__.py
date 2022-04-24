@@ -6,7 +6,7 @@ from databricks.sql.dbapi import *
 # Make all exceptions visible in this module per DB-API
 from databricks.sql.exc import *
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 USER_AGENT_NAME = "PyDatabricksSqlConnector"
 
 def connect(
