@@ -1,5 +1,21 @@
-v1.0.2 - April 4, 2022
+v2.0.0 - April 19, 2022
+- Initial stable release of V2
+- Added better support for complex types, so that in Databricks runtime 10.3+, Arrays, Maps and Structs will get 
+  deserialized as lists, lists of tuples and dicts, respectively.
+- Changed the name of the metadata arg to http_headers
+
+v2.0.b2 - April 4, 2022
 - Change import of collections.Iterable to collections.abc.Iterable to make the library compatible with Python 3.10
+- Fixed bug with .tables method so that .tables works as expected with Unity-Catalog enabled endpoints
+
+v2.0.0b1 - March 4, 2022
+- Fix packaging issue (dependencies were not being installed properly)
+- Fetching timestamp results will now return aware instead of naive timestamps
+- The client will now default to using simplified error messages
+
+v2.0.0b - February 8, 2022
+- Initial beta release of V2. V2 is an internal re-write of large parts of the connector to use Databricks edge features. All public APIs from V1 remain.
+- Added Unity Catalog support (pass catalog and / or  schema key word args to the .connect method to select initial schema and catalog)
 
 v1.0.0 - January 20, 2022
 - Add operations for retrieving metadata

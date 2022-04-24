@@ -1,28 +1,48 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import datetime
 
-# Make all DB-API interface objects visible in this module.
-from databricks.sql.dbapi import *
-# Make all exceptions visible in this module per DB-API
 from databricks.sql.exc import *
 
-__version__ = "1.0.2"
+# PEP 249 module globals
+apilevel = '2.0'
+threadsafety = 1  # Threads may share the module, but not connections.
+paramstyle = 'pyformat'  # Python extended format codes, e.g. ...WHERE name=%(name)s
+
+
+class DBAPITypeObject(object):
+    def __init__(self, *values):
+        self.values = values
+
+    def __eq__(self, other):
+        return other in self.values
+
+    def __repr__(self):
+        return "DBAPITypeObject({})".format(self.values)
+
+
+STRING = DBAPITypeObject('string')
+BINARY = DBAPITypeObject('binary')
+NUMBER = DBAPITypeObject('boolean', 'tinyint', 'smallint', 'int', 'bigint', 'float', 'double',
+                         'decimal')
+DATETIME = DBAPITypeObject('timestamp')
+DATE = DBAPITypeObject('date')
+ROWID = DBAPITypeObject()
+
+__version__ = "2.0.0"
 USER_AGENT_NAME = "PyDatabricksSqlConnector"
 
-def connect(
-        server_hostname,
-        http_path,
-        access_token,
-        **kwargs
-):
-    """Connect to a Databricks SQL endpoint or a Databricks cluster.
+# These two functions are pyhive legacy
+Date = datetime.date
+Timestamp = datetime.datetime
 
-    :param server_hostname: Databricks instance host name.
-    :param http_path: Http path either to a DBSQL endpoint (e.g. /sql/1.0/endpoints/1234567890abcdef)
-           or to a DBR interactive cluster (e.g. /sql/protocolv1/o/1234567890123456/1234-123456-slid123)
-    :param access_token: Http Bearer access token, e.g. Databricks Personal Access Token.
 
-    :returns: a :py:class:`Connection` object.
-    """
-    from databricks.sql.client import Connection
+def DateFromTicks(ticks):
+    return Date(*time.localtime(ticks)[:3])
+
+
+def TimestampFromTicks(ticks):
+    return Timestamp(*time.localtime(ticks)[:6])
+
+
+def connect(server_hostname, http_path, access_token, **kwargs):
+    from .client import Connection
     return Connection(server_hostname, http_path, access_token, **kwargs)

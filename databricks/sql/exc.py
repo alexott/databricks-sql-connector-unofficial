@@ -1,72 +1,92 @@
-"""
-Package private common utilities. Do not use directly.
-"""
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import json
+import logging
 
-__all__ = [
-    'Error', 'Warning', 'InterfaceError', 'DatabaseError', 'InternalError', 'OperationalError',
-    'ProgrammingError', 'DataError', 'NotSupportedError',
-]
+logger = logging.getLogger(__name__)
 
 
+### PEP-249 Mandated ###
 class Error(Exception):
-    """Exception that is the base class of all other error exceptions.
-
-    You can use this to catch all errors with one single except statement.
+    """Base class for DB-API2.0 exceptions.
+    `message`: An optional user-friendly error message. It should be short, actionable and stable
+    `context`: Optional extra context about the error. MUST be JSON serializable
     """
-    pass
+
+    def __init__(self, message=None, context=None, *args, **kwargs):
+        super().__init__(message, *args, **kwargs)
+        self.message = message
+        self.context = context or {}
+
+    def __str__(self):
+        return self.message
+
+    def message_with_context(self):
+        return self.message + ": " + json.dumps(self.context, default=str)
 
 
 class Warning(Exception):
-    """Exception raised for important warnings like data truncations while inserting, etc."""
     pass
 
 
 class InterfaceError(Error):
-    """Exception raised for errors that are related to the database interface rather than the
-    database itself.
-    """
     pass
 
 
 class DatabaseError(Error):
-    """Exception raised for errors that are related to the database."""
     pass
 
 
 class InternalError(DatabaseError):
-    """Exception raised when the database encounters an internal error, e.g. the cursor is not valid
-    anymore, the transaction is out of sync, etc."""
     pass
 
 
 class OperationalError(DatabaseError):
-    """Exception raised for errors that are related to the database's operation and not necessarily
-    under the control of the programmer, e.g. an unexpected disconnect occurs, the data source name
-    is not found, a transaction could not be processed, a memory allocation error occurred during
-    processing, etc.
-    """
     pass
 
 
 class ProgrammingError(DatabaseError):
-    """Exception raised for programming errors, e.g. table not found or already exists, syntax error
-    in the SQL statement, wrong number of parameters specified, etc.
-    """
+    pass
+
+
+class IntegrityError(DatabaseError):
     pass
 
 
 class DataError(DatabaseError):
-    """Exception raised for errors that are due to problems with the processed data like division by
-    zero, numeric value out of range, etc.
-    """
     pass
 
 
 class NotSupportedError(DatabaseError):
-    """Exception raised in case a method or database API was used which is not supported by the
-    database, e.g. requesting a ``.rollback()`` on a connection that does not support transaction or
-    has transactions turned off.
+    pass
+
+
+### Custom error classes ###
+class InvalidServerResponseError(OperationalError):
+    """Thrown if the server does not set the initial namespace correctly"""
+    pass
+
+
+class ServerOperationError(DatabaseError):
+    """Thrown if the operation moved to an error state, if for example there was a syntax
+    error.
+    Its context will have the following keys:
+    "diagnostic-info": The full Spark stack trace (if available)
+    "operation-id": The Thrift ID of the operation
+    """
+    pass
+
+
+class RequestError(OperationalError):
+    """Thrown if there was a error during request to the server.
+    Its context will have the following keys:
+    "method": The RPC method name that failed
+    "session-id": The Thrift session guid
+    "query-id": The Thrift query guid (if available)
+    "http-code": HTTP response code to RPC request (if available)
+    "error-message": Error message from the HTTP headers (if available)
+    "original-exception": The Python level original exception
+    "no-retry-reason": Why the request wasn't retried (if available)
+    "bounded-retry-delay": The maximum amount of time an error will be retried before giving up
+    "attempt": current retry number / maximum number of retries
+    "elapsed-seconds": time that has elapsed since first attempting the RPC request
     """
     pass

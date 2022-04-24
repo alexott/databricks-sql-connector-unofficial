@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: databricks-sql-connector
-Version: 1.0.2
+Version: 2.0.0
 Summary: Databricks SQL Connector for Python
 Home-page: https://databricks.com
 Author: Databricks
@@ -11,15 +11,15 @@ Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: Apache Software License
 Classifier: Operating System :: OS Independent
 Classifier: Topic :: Database :: Front-Ends
+Requires-Python: >=3.7
 Description-Content-Type: text/markdown
-License-File: LICENSE
-License-File: NOTICE
-Requires-Dist: future
 Requires-Dist: thrift (>=0.13.0)
+Requires-Dist: pyarrow (>=5.0.0)
+Requires-Dist: pandas (>=1.0.0)
 
 # Databricks SQL Connector for Python
 
-**Status: Generally available**
+**Status: Private preview**
 
 Documentation can be found here: [Databricks SQL Connector for Python](https://docs.databricks.com/dev-tools/python-sql-connector.html).
 
